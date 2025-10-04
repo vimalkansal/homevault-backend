@@ -1,12 +1,14 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './routes/auth.routes';
 import itemRoutes from './routes/item.routes';
 import photoRoutes from './routes/photo.routes';
 import categoryRoutes from './routes/category.routes';
 import exportRoutes from './routes/export.routes';
 import aiRoutes from './routes/ai.routes';
+import userRoutes from './routes/user.routes';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load environment variables
@@ -22,6 +24,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (uploads)
+const uploadDir = process.env.UPLOAD_DIR || './uploads';
+app.use('/uploads', express.static(path.resolve(uploadDir)));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'HomeVault API is running' });
@@ -30,6 +36,7 @@ app.get('/health', (req, res) => {
 // API Routes
 const API_PREFIX = '/api/v1';
 app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/items`, itemRoutes);
 app.use(`${API_PREFIX}/photos`, photoRoutes);
 app.use(`${API_PREFIX}/categories`, categoryRoutes);
