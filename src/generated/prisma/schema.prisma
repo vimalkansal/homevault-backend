@@ -1,0 +1,131 @@
+// HomeVault Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  items         Item[]
+  categories    Category[]
+  itemHistory   ItemHistory[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+// Item model
+model Item {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  location    String
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdBy User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  photos    Photo[]
+  tags      ItemTag[]
+  history   ItemHistory[]
+
+  @@index([name])
+  @@index([location])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("items")
+}
+
+// Photo model
+model Photo {
+  id           String   @id @default(uuid())
+  itemId       String   @map("item_id")
+  filePath     String   @map("file_path")
+  fileSize     Int?     @map("file_size")
+  annotations  Json?
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("photos")
+}
+
+// Category model
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  type        String // 'predefined' or 'custom'
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items     ItemTag[]
+
+  @@index([type])
+  @@map("categories")
+}
+
+// ItemTag junction table (many-to-many)
+model ItemTag {
+  itemId     String   @map("item_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  item     Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, categoryId])
+  @@map("item_tags")
+}
+
+// ItemHistory model
+model ItemHistory {
+  id           String   @id @default(uuid())
+  itemId       String   @map("item_id")
+  userId       String?  @map("user_id")
+  action       String
+  fieldChanged String?  @map("field_changed")
+  oldValue     String?  @map("old_value")
+  newValue     String?  @map("new_value")
+  timestamp    DateTime @default(now())
+
+  item Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([itemId])
+  @@index([timestamp])
+  @@map("item_history")
+}
+
+// Notification model
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
+}
