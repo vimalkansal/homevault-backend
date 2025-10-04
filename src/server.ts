@@ -1,3 +1,9 @@
+// Sanitize OpenAI API key FIRST - before any imports that might use it
+if (process.env.OPENAI_API_KEY) {
+  process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY.replace(/[\r\n\s]/g, '');
+  console.log('🔧 Sanitized OpenAI API key (removed whitespace/newlines)');
+}
+
 import app from './app';
 import prisma from './config/database';
 
