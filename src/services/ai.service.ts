@@ -17,13 +17,13 @@ export class AIService {
       throw new Error('OPENAI_API_KEY is not set in environment variables');
     }
 
-    // Trim whitespace and newlines from API key
-    const apiKey = process.env.OPENAI_API_KEY.trim().replace(/\s+/g, '');
+    // Trim whitespace and newlines from API key and update environment
+    const apiKey = process.env.OPENAI_API_KEY.trim().replace(/[\r\n\s]/g, '');
+    process.env.OPENAI_API_KEY = apiKey;
 
     this.model = new ChatOpenAI({
       modelName: 'gpt-4o-mini',
       temperature: 0.7,
-      openAIApiKey: apiKey,
       maxTokens: 1000,
     });
   }
